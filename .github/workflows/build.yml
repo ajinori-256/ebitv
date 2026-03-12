@@ -42,25 +42,25 @@ jobs:
         run: go build ./...
 
   raspberry-pi-build:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: linux-arm64
-            goos: linux
-            goarch: arm64
-            goarm: ""
-            output: career_app-linux-arm64
-          - name: linux-armv7
-            goos: linux
-            goarch: arm
-            goarm: "7"
-            output: career_app-linux-armv7
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Linux deps for Ebiten
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config \
+            libx11-dev \
+            libxcursor-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxi-dev \
+            libxxf86vm-dev \
+            libgl1-mesa-dev \
+            libasound2-dev
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -72,18 +72,16 @@ jobs:
       - name: Download modules
         run: go mod download
 
-      - name: Build (${{ matrix.name }})
+      - name: Build (linux-arm64)
         env:
-          CGO_ENABLED: "0"
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          GOARM: ${{ matrix.goarm }}
+          GOOS: linux
+          GOARCH: arm64
         run: |
           mkdir -p dist
-          go build -o dist/${{ matrix.output }} ./cmd/career_app
+          go build -o dist/career_app-linux-arm64 ./cmd/career_app
 
-      - name: Upload artifact (${{ matrix.name }})
+      - name: Upload artifact (linux-arm64)
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.output }}
-          path: dist/${{ matrix.output }}
+          name: career_app-linux-arm64
+          path: dist/career_app-linux-arm64
